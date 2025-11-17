@@ -38,11 +38,9 @@ s = Solver()
 
 # Construct boolean decision vars
 decision_vars = [Bool(f"S_{slot["slot_id"]}_{cell}") for slot in data["path_data"]["buffer_slots"] for cell in buffer_sizes]
-print(decision_vars)
-s.add(decision_vars)
+print("Decision vars: ", str(decision_vars))
 
 # One-hot constraint: at least one cell per slot, but no more
-# s.add(If(S_1_X1, 1, 0) + If(S_1_X2, 1, 0) == 1)
 for slot in slot_ids:
      s.add(Sum([If(Bool(f"S_{slot}_{cell}"), 1, 0) for cell in buffer_sizes]) == 1)
 
