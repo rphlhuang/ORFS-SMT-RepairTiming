@@ -37,12 +37,35 @@ print("Slot ids: " + str(slot_ids))
 s = Solver()
 
 # Construct boolean decision vars
-decision_vars = [Bool(f"S_{slot['slot_id']}_{cell}") for slot in data['path_data']['buffer_slots'] for cell in buffer_sizes]
+decision_vars = {
+    f"S_{slot['slot_id']}_{cell}": Bool(f"S_{slot['slot_id']}_{cell}")
+        for slot in data['path_data']['buffer_slots']
+        for cell in buffer_sizes}
 print("Decision vars: ", str(decision_vars))
 
-# One-hot constraint: at least one cell per slot, but no more
+# One-hot constraints: at least one cell per slot, but no more
 for slot in slot_ids:
      s.add(Sum([If(Bool(f"S_{slot}_{cell}"), 1, 0) for cell in buffer_sizes]) == 1)
+
+# Capacitance coherency constaints
+C_in = {slot: Real(f"C_in_{slot}") for slot in slot_ids}
+C_out ={slot: Real(f"C_out_{slot}") for slot in slot_ids}
+# C_out = C_in + C_net
+for i, slot in enumerate(slot_ids):
+    slot_id = slot
+    net = data['path_data']['nets'][i] # Assumes nets list matches slots list
+    
+    C_wire = net['C_wire']
+    
+    if i < len(slot_ids) - 1:
+        # Not the last slot. Load is C_wire + C_in of next slot.
+        next_slot_id = slot_ids[i+1]
+        C_in_next = C_in[next_slot_id]
+        s.add(C_out[slot_id] == C_wire + C_in_next)
+    else:
+        # This is the last slot. Load is C_wire + fixed downstream cap.
+        C_downstream = net['C_downstream_in']
+        s.add(C_out[slot_id] == C_wire + C_downstream)
 
 try:
     result = s.check()
