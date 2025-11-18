@@ -32,7 +32,7 @@ print("Buffer sizes: " + str(buffer_sizes))
 
 slot_ids = set()
 for i in data['path_data']['buffer_slots']:
-        slot_ids.add(i['slot_id'])
+    slot_ids.add(i['slot_id'])
 slot_ids = list(slot_ids)
 print("Slot ids: " + str(slot_ids))
 
@@ -134,6 +134,47 @@ for i, slot_id in enumerate(slot_ids):
     # --- 3. Add the Final D_stage constraint ---
     s.add(D_stage_max[slot_id] == D_cell_max + D_net)
     s.add(D_stage_min[slot_id] == D_cell_min + D_net)
+    
+# --- GLOBAL TIMING PARAMETERS ---
+T_period = data["global_timing"]["T_period"]
+T_skew   = data["global_timing"]["T_skew"]
+T_setup  = data["global_timing"]["T_setup"]
+T_hold   = data["global_timing"]["T_hold"]
+
+T_clk_q_max = data["path_data"]["fixed_delays"]["T_clk_q_max"]
+T_clk_q_min = data["path_data"]["fixed_delays"]["T_clk_q_min"]
+
+# --- ARRIVAL TIMES (DATA) ---
+AT_max = Real("AT_max")  # latest arrival at capture flop (for setup)
+AT_min = Real("AT_min")  # earliest arrival at capture flop (for hold)
+
+# Sum the stage delays
+sum_D_max = Sum([D_stage_max[slot] for slot in slot_ids])
+sum_D_min = Sum([D_stage_min[slot] for slot in slot_ids])
+
+# AT_max = clk->Q_max + sum of max stage delays
+s.add(AT_max == T_clk_q_max + sum_D_max)
+
+# AT_min = clk->Q_min + sum of min stage delays
+s.add(AT_min == T_clk_q_min + sum_D_min)
+
+# --- REQUIRED TIMES ---
+RAT_setup = T_period - T_setup - T_skew   # Python float
+RAT_hold  = T_hold + T_skew               # Python float
+
+# --- SLACK VARIABLES ---
+slack_setup = Real("slack_setup")
+slack_hold  = Real("slack_hold")
+
+# slack_setup = RAT_setup - AT_max
+s.add(slack_setup == RAT_setup - AT_max)
+
+# slack_hold = AT_min - RAT_hold
+s.add(slack_hold == AT_min - RAT_hold)
+
+# Enforce non-negative slack => timing-legal
+s.add(slack_setup >= 0)
+s.add(slack_hold  >= 0)
 
 print("\nPrinting all constraints:")
 set_option(rational_to_decimal=True)
