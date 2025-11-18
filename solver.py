@@ -97,7 +97,7 @@ for i, slot_id in enumerate(slot_ids):
     # Get the C_out variable for this slot (already defined)
     C_out_var = C_out[slot_id]
 
-    # --- 1. Build D_cell (using "sum of products") ---
+    # Build D_cell (using "sum of products")
     cell_delay_max_sum = []
     cell_delay_min_sum = []
     
@@ -116,7 +116,7 @@ for i, slot_id in enumerate(slot_ids):
     D_cell_max = Sum(cell_delay_max_sum)
     D_cell_min = Sum(cell_delay_min_sum)
 
-    # --- 2. Build D_net (Elmore Delay) ---
+    # Build D_net (Elmore delay)
     R_wire = net_data['R_wire']
     C_wire = net_data['C_wire']
     
@@ -127,19 +127,18 @@ for i, slot_id in enumerate(slot_ids):
     else:
         C_downstream_load = net_data['C_downstream_in']
 
-    # D_net = R_wire * (C_wire / 2.0 + C_downstream_load)
     # Note: Use 2.0 to ensure floating-point math, not integer
     D_net = R_wire * (C_wire / 2.0 + C_downstream_load)
 
-    # --- 3. Add the Final D_stage constraint ---
+    # Add the Final D_stage constraint
     s.add(D_stage_max[slot_id] == D_cell_max + D_net)
     s.add(D_stage_min[slot_id] == D_cell_min + D_net)
     
 # --- GLOBAL TIMING PARAMETERS ---
 T_period = data["global_timing"]["T_period"]
-T_skew   = data["global_timing"]["T_skew"]
-T_setup  = data["global_timing"]["T_setup"]
-T_hold   = data["global_timing"]["T_hold"]
+T_skew = data["global_timing"]["T_skew"]
+T_setup = data["global_timing"]["T_setup"]
+T_hold = data["global_timing"]["T_hold"]
 
 T_clk_q_max = data["path_data"]["fixed_delays"]["T_clk_q_max"]
 T_clk_q_min = data["path_data"]["fixed_delays"]["T_clk_q_min"]
@@ -159,8 +158,8 @@ s.add(AT_max == T_clk_q_max + sum_D_max)
 s.add(AT_min == T_clk_q_min + sum_D_min)
 
 # --- REQUIRED TIMES ---
-RAT_setup = T_period - T_setup - T_skew   # Python float
-RAT_hold  = T_hold + T_skew               # Python float
+RAT_setup = T_period - T_setup - T_skew # Python float
+RAT_hold = T_hold + T_skew
 
 # --- SLACK VARIABLES ---
 slack_setup = Real("slack_setup")
