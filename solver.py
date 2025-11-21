@@ -2,18 +2,55 @@ from z3 import *
 import pprint
 
 # --- SETUP --- 
+# data = {
+#   "global_timing": { "T_period": 1.8, "T_skew": 0.05, "T_setup": 0.08, "T_hold": 0.04 },
+#   "path_data": {
+#     "fixed_delays": { "T_clk_q_max": 0.12, "T_clk_q_min": 0.09 },
+#     "buffer_slots": [
+#       { "slot_id": "buf_slot_1", "choices": [
+#           { "cell_type": "BUF_X1", "a_max": 2.1, "b_max": 0.08, "a_min": 1.8, "b_min": 0.06, "C_in": 0.015 },
+#           { "cell_type": "BUF_X2", "a_max": 1.5, "b_max": 0.06, "a_min": 1.3, "b_min": 0.05, "C_in": 0.022 } ]
+#         # { "cell_type": "BUF_X1", "delay": 0.2 },
+#         # { "cell_type": "BUF_X2", "delay": 0.1 } ]
+#       },
+#       { "slot_id": "buf_slot_2", "choices": [
+#           { "cell_type": "BUF_X1", "a_max": 2.1, "b_max": 0.08, "a_min": 1.8, "b_min": 0.06, "C_in": 0.016 },
+#           { "cell_type": "BUF_X2", "a_max": 1.5, "b_max": 0.06, "a_min": 1.3, "b_min": 0.05, "C_in": 0.024 } ]
+#       }
+#     ],
+#     "nets": [
+#       { "net_id": "net_1_to_2", "C_wire": 0.035, "R_wire": 0.15 },
+#       { "net_id": "net_2_to_flop", "C_wire": 0.040, "R_wire": 0.18, "C_downstream_in": 0.012 }
+#     ]
+#   }
+# }
+
 data = {
   "global_timing": { "T_period": 1.8, "T_skew": 0.05, "T_setup": 0.08, "T_hold": 0.04 },
   "path_data": {
-    "fixed_delays": { "T_clk_q_max": 0.12, "T_clk_q_min": 0.09 },
+    # Only one nominal clock-to-q delay now
+    "fixed_delays": { "T_clk_q": 0.11 }, 
     "buffer_slots": [
       { "slot_id": "buf_slot_1", "choices": [
-          { "cell_type": "BUF_X1", "a_max": 2.1, "b_max": 0.08, "a_min": 1.8, "b_min": 0.06, "C_in": 0.015 },
-          { "cell_type": "BUF_X2", "a_max": 1.5, "b_max": 0.06, "a_min": 1.3, "b_min": 0.05, "C_in": 0.022 } ]
+          # Nominal coefficients (avg of previous min/max)
+          { "cell_type": "BUF_X1",  "a": 1.95, "b": 0.07, "C_in": 0.015 },
+          { "cell_type": "BUF_X2",  "a": 1.40, "b": 0.055, "C_in": 0.022 },
+          { "cell_type": "BUF_X4",  "a": 0.72, "b": 0.065, "C_in": 0.044 },
+          { "cell_type": "BUF_X6",  "a": 0.50, "b": 0.075, "C_in": 0.066 },
+          { "cell_type": "BUF_X8",  "a": 0.36, "b": 0.085, "C_in": 0.088 },
+          { "cell_type": "BUF_X12", "a": 0.25, "b": 0.095, "C_in": 0.132 },
+          { "cell_type": "BUF_X16", "a": 0.18, "b": 0.11,  "C_in": 0.176 }
+        ]
       },
       { "slot_id": "buf_slot_2", "choices": [
-          { "cell_type": "BUF_X1", "a_max": 2.1, "b_max": 0.08, "a_min": 1.8, "b_min": 0.06, "C_in": 0.016 },
-          { "cell_type": "BUF_X2", "a_max": 1.5, "b_max": 0.06, "a_min": 1.3, "b_min": 0.05, "C_in": 0.024 } ]
+          { "cell_type": "BUF_X1",  "a": 1.95, "b": 0.07, "C_in": 0.015 },
+          { "cell_type": "BUF_X2",  "a": 1.40, "b": 0.055, "C_in": 0.022 },
+          { "cell_type": "BUF_X4",  "a": 0.72, "b": 0.065, "C_in": 0.044 },
+          { "cell_type": "BUF_X6",  "a": 0.50, "b": 0.075, "C_in": 0.066 },
+          { "cell_type": "BUF_X8",  "a": 0.36, "b": 0.085, "C_in": 0.088 },
+          { "cell_type": "BUF_X12", "a": 0.25, "b": 0.095, "C_in": 0.132 },
+          { "cell_type": "BUF_X16", "a": 0.18, "b": 0.11,  "C_in": 0.176 }
+        ]
       }
     ],
     "nets": [
@@ -173,7 +210,7 @@ s.add(slack_hold == AT_min - RAT_hold)
 
 # Enforce non-negative slack => timing-legal
 s.add(slack_setup >= 0)
-s.add(slack_hold  >= 0)
+s.add(slack_hold >= 0)
 
 print("\nPrinting all constraints:")
 set_option(rational_to_decimal=True)
