@@ -1,5 +1,6 @@
 from z3 import *
 import pprint
+from z3help import *
 
 # --- SETUP --- 
 # data = {
@@ -202,12 +203,14 @@ set_option(precision=10)
 for constaint in s.assertions():
     print(constaint, "\n")
 
+choices = {}
 try:
     print(" ---- SOLVING ---- ")
     result = s.check()
     if result == sat:
         print("Found a valid solution!")
         m = s.model()
+        choices = extract_buffers(m, buffer_sizes)
         nicer = sorted([(d, m[d]) for d in m], key = lambda x: str(x[0]))
         pprint.pprint(nicer)
     else:
@@ -215,3 +218,11 @@ try:
 
 except Exception as e:
     print(f"An error occurred: {e}")
+        
+# Print Format:
+# buf_slot_1 BUF_X1
+# buf_slot_2 BUF_X2
+
+with open("buffers.sol", "w") as f:
+    for slot, cell in sorted(choices.items()):
+        f.write(f"{slot} {cell}\n")
