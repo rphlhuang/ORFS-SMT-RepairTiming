@@ -123,8 +123,7 @@ for i, slot in enumerate(slot_ids):
 
 
 # --- STAGE DELAY CONSTRAINTS ---
-D_stage_max = {slot: Real(f"D_stage_max_{slot}") for slot in slot_ids}
-D_stage_min = {slot: Real(f"D_stage_min_{slot}") for slot in slot_ids}
+D_stage = {slot: Real(f"D_stage_{slot}") for slot in slot_ids}
 
 # Loop through each slot and build its delay equation
 for i, slot_id in enumerate(slot_ids):
@@ -135,23 +134,16 @@ for i, slot_id in enumerate(slot_ids):
     C_out_var = C_out[slot_id]
 
     # Build D_cell (using "sum of products")
-    cell_delay_max_sum = []
-    cell_delay_min_sum = []
-    
+    cell_delay_sum = []
     for choice in slot_data['choices']:
         cell_type = choice['cell_type']
         z3_var = decision_vars[(slot_id, cell_type)]
-        
-        # D_cell_max = a_max * C_out + b_max
-        a_max, b_max = choice['a_max'], choice['b_max']
-        cell_delay_max_sum.append( If(z3_var, a_max * C_out_var + b_max, 0) )
-        
-        # D_cell_min = a_min * C_out + b_min
-        a_min, b_min = choice['a_min'], choice['b_min']
-        cell_delay_min_sum.append( If(z3_var, a_min * C_out_var + b_min, 0) )
 
-    D_cell_max = Sum(cell_delay_max_sum)
-    D_cell_min = Sum(cell_delay_min_sum)
+        a = choice['a']
+        b = choice['b']
+        cell_delay_sum.append(If(z3_var, a * C_out_var + b, 0))
+
+    D_cell = Sum(cell_delay_sum)
 
     # Build D_net (Elmore delay)
     R_wire = net_data['R_wire']
@@ -168,31 +160,23 @@ for i, slot_id in enumerate(slot_ids):
     D_net = R_wire * (C_wire / 2.0 + C_downstream_load)
 
     # Add the Final D_stage constraint
-    s.add(D_stage_max[slot_id] == D_cell_max + D_net)
-    s.add(D_stage_min[slot_id] == D_cell_min + D_net)
+    s.add(D_stage[slot_id] == D_cell + D_net)
     
 # --- GLOBAL TIMING PARAMETERS ---
 T_period = data["global_timing"]["T_period"]
-T_skew = data["global_timing"]["T_skew"]
-T_setup = data["global_timing"]["T_setup"]
-T_hold = data["global_timing"]["T_hold"]
-
-T_clk_q_max = data["path_data"]["fixed_delays"]["T_clk_q_max"]
-T_clk_q_min = data["path_data"]["fixed_delays"]["T_clk_q_min"]
+T_skew   = data["global_timing"]["T_skew"]
+T_setup  = data["global_timing"]["T_setup"]
+T_hold   = data["global_timing"]["T_hold"]
+T_clk_q  = data["path_data"]["fixed_delays"]["T_clk_q"]
 
 # --- ARRIVAL TIMES (DATA) ---
-AT_max = Real("AT_max")  # latest arrival at capture flop (for setup)
-AT_min = Real("AT_min")  # earliest arrival at capture flop (for hold)
+AT = Real("AT")  # nominal arrival at capture flop
 
 # Sum the stage delays
-sum_D_max = Sum([D_stage_max[slot] for slot in slot_ids])
-sum_D_min = Sum([D_stage_min[slot] for slot in slot_ids])
+sum_D = Sum([D_stage[slot] for slot in slot_ids])
 
-# AT_max = clk->Q_max + sum of max stage delays
-s.add(AT_max == T_clk_q_max + sum_D_max)
-
-# AT_min = clk->Q_min + sum of min stage delays
-s.add(AT_min == T_clk_q_min + sum_D_min)
+# AT = clk->Q + sum of stage delays
+s.add(AT == T_clk_q + sum_D)
 
 # --- REQUIRED TIMES ---
 RAT_setup = T_period - T_setup - T_skew # Python float
@@ -203,10 +187,10 @@ slack_setup = Real("slack_setup")
 slack_hold  = Real("slack_hold")
 
 # slack_setup = RAT_setup - AT_max
-s.add(slack_setup == RAT_setup - AT_max)
+s.add(slack_setup == RAT_setup - AT)
 
 # slack_hold = AT_min - RAT_hold
-s.add(slack_hold == AT_min - RAT_hold)
+s.add(slack_hold == AT - RAT_hold)
 
 # Enforce non-negative slack => timing-legal
 s.add(slack_setup >= 0)
