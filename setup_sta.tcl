@@ -11,12 +11,13 @@ read_sdc ./constraints/design.sdc
 # Get initial timing values
 update_timing
 
+
+
 # ==========================================
 #             TCL Functions
 # ==========================================
 
-
-# Procedure: apply buffer solution file
+# Apply buffer solution file
 # ==========================================
 # File format expected:
 #   <slot_name> <cell_name>
@@ -72,7 +73,7 @@ proc apply_buffer_solution {filename} {
 }
 
 
-# Procedure: run timing & print worst slacks
+# Run timing & print worst slacks
 
 proc compute_worst_slacks {} {
     # recompute timing after buffer changes
@@ -87,7 +88,7 @@ proc compute_worst_slacks {} {
     puts "WORST_HOLD_SLACK  $ws_hold"
 
     # optional: dump the worst path for debugging/conflict clauses
-    report_timing -max_paths 1 > worst_path.rpt
+    # report_timing -max_paths 1 > worst_path.rpt
 }
 
 puts "INFO: OpenSTA setup complete."
