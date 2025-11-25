@@ -1,0 +1,86 @@
+{
+  "global_timing": {
+    "T_period": 1.8,
+    "T_skew": 0.05,
+    "T_setup": 0.08,
+    "T_hold": 0.04
+  },
+  "path_data": {
+    "fixed_delays": {
+      "T_clk_q": 0.11
+    },
+    "stages": [
+      {
+        "slot_id": "inst_1_NAND2",
+        "type": "combinational",
+        "choices": [
+          { "cell_type": "NAND2_X1", "a": 2.50, "b": 0.09, "C_in": 0.012 }
+        ]
+      },
+      {
+        "slot_id": "inst_2_BUF",
+        "type": "buffer",
+        "choices": [
+          { "cell_type": "BUF_X1",  "a": 1.95, "b": 0.07,  "C_in": 0.015 },
+          { "cell_type": "BUF_X2",  "a": 1.40, "b": 0.055, "C_in": 0.022 },
+          { "cell_type": "BUF_X4",  "a": 0.72, "b": 0.065, "C_in": 0.044 },
+          { "cell_type": "BUF_X6",  "a": 0.50, "b": 0.075, "C_in": 0.066 },
+          { "cell_type": "BUF_X8",  "a": 0.36, "b": 0.085, "C_in": 0.088 },
+          { "cell_type": "BUF_X12", "a": 0.25, "b": 0.095, "C_in": 0.132 },
+          { "cell_type": "BUF_X16", "a": 0.18, "b": 0.11,  "C_in": 0.176 }
+        ]
+      },
+      {
+        "slot_id": "inst_3_NOR3",
+        "type": "combinational",
+        "choices": [
+          { "cell_type": "NOR3_X2", "a": 3.10, "b": 0.12, "C_in": 0.018 }
+        ]
+      },
+      {
+        "slot_id": "inst_4_BUF",
+        "type": "buffer",
+        "choices": [
+          { "cell_type": "BUF_X1",  "a": 1.95, "b": 0.07,  "C_in": 0.015 },
+          { "cell_type": "BUF_X2",  "a": 1.40, "b": 0.055, "C_in": 0.022 },
+          { "cell_type": "BUF_X4",  "a": 0.72, "b": 0.065, "C_in": 0.044 },
+          { "cell_type": "BUF_X6",  "a": 0.50, "b": 0.075, "C_in": 0.066 },
+          { "cell_type": "BUF_X8",  "a": 0.36, "b": 0.085, "C_in": 0.088 },
+          { "cell_type": "BUF_X12", "a": 0.25, "b": 0.095, "C_in": 0.132 },
+          { "cell_type": "BUF_X16", "a": 0.18, "b": 0.11,  "C_in": 0.176 }
+        ]
+      }
+    ],
+    "nets": [
+      {
+        "net_id": "net_inst_1_to_inst_2",
+        "source": "inst_1_NAND2",
+        "sink": "inst_2_BUF",
+        "C_wire": 0.035,
+        "R_wire": 0.15
+      },
+      {
+        "net_id": "net_inst_2_to_inst_3",
+        "source": "inst_2_BUF",
+        "sink": "inst_3_NOR3",
+        "C_wire": 0.030,
+        "R_wire": 0.12
+      },
+      {
+        "net_id": "net_inst_3_to_inst_4",
+        "source": "inst_3_NOR3",
+        "sink": "inst_4_BUF",
+        "C_wire": 0.040,
+        "R_wire": 0.18
+      },
+      {
+        "net_id": "net_inst_4_to_sink",
+        "source": "inst_4_BUF",
+        "sink": "D_pin",
+        "C_wire": 0.010,
+        "R_wire": 0.05,
+        "C_downstream_in": 0.005
+      }
+    ]
+  }
+}
