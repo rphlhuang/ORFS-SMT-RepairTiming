@@ -1,30 +1,6 @@
 from z3 import *
 import pprint
-from z3help import *
-
-# --- SETUP --- 
-# data = {
-#   "global_timing": { "T_period": 1.8, "T_skew": 0.05, "T_setup": 0.08, "T_hold": 0.04 },
-#   "path_data": {
-#     "fixed_delays": { "T_clk_q_max": 0.12, "T_clk_q_min": 0.09 },
-#     "buffer_slots": [
-#       { "slot_id": "buf_slot_1", "choices": [
-#           { "cell_type": "BUF_X1", "a_max": 2.1, "b_max": 0.08, "a_min": 1.8, "b_min": 0.06, "C_in": 0.015 },
-#           { "cell_type": "BUF_X2", "a_max": 1.5, "b_max": 0.06, "a_min": 1.3, "b_min": 0.05, "C_in": 0.022 } ]
-#         # { "cell_type": "BUF_X1", "delay": 0.2 },
-#         # { "cell_type": "BUF_X2", "delay": 0.1 } ]
-#       },
-#       { "slot_id": "buf_slot_2", "choices": [
-#           { "cell_type": "BUF_X1", "a_max": 2.1, "b_max": 0.08, "a_min": 1.8, "b_min": 0.06, "C_in": 0.016 },
-#           { "cell_type": "BUF_X2", "a_max": 1.5, "b_max": 0.06, "a_min": 1.3, "b_min": 0.05, "C_in": 0.024 } ]
-#       }
-#     ],
-#     "nets": [
-#       { "net_id": "net_1_to_2", "C_wire": 0.035, "R_wire": 0.15 },
-#       { "net_id": "net_2_to_flop", "C_wire": 0.040, "R_wire": 0.18, "C_downstream_in": 0.012 }
-#     ]
-#   }
-# }
+# from z3help import *
 
 data = {
   "global_timing": { "T_period": 1.8, "T_skew": 0.05, "T_setup": 0.08, "T_hold": 0.04 },
@@ -61,23 +37,110 @@ data = {
   }
 }
 
+# data = {
+#   "global_timing": {
+#     "T_period": 1.8,
+#     "T_skew": 0.05,
+#     "T_setup": 0.08,
+#     "T_hold": 0.04
+#   },
+#   "path_data": {
+#     "fixed_delays": {
+#       "T_clk_q": 0.11
+#     },
+#     "stages": [
+#       {
+#         "slot_id": "inst_1_NAND2",
+#         "type": "combinational",
+#         "choices": [
+#           { "cell_type": "NAND2_X1", "a": 2.50, "b": 0.09, "C_in": 0.012 }
+#         ]
+#       },
+#       {
+#         "slot_id": "inst_2_BUF",
+#         "type": "buffer",
+#         "choices": [
+#           { "cell_type": "BUF_X1",  "a": 1.95, "b": 0.07,  "C_in": 0.015 },
+#           { "cell_type": "BUF_X2",  "a": 1.40, "b": 0.055, "C_in": 0.022 },
+#           { "cell_type": "BUF_X4",  "a": 0.72, "b": 0.065, "C_in": 0.044 },
+#           { "cell_type": "BUF_X6",  "a": 0.50, "b": 0.075, "C_in": 0.066 },
+#           { "cell_type": "BUF_X8",  "a": 0.36, "b": 0.085, "C_in": 0.088 },
+#           { "cell_type": "BUF_X12", "a": 0.25, "b": 0.095, "C_in": 0.132 },
+#           { "cell_type": "BUF_X16", "a": 0.18, "b": 0.11,  "C_in": 0.176 }
+#         ]
+#       },
+#       {
+#         "slot_id": "inst_3_NOR3",
+#         "type": "combinational",
+#         "choices": [
+#           { "cell_type": "NOR3_X2", "a": 3.10, "b": 0.12, "C_in": 0.018 }
+#         ]
+#       },
+#       {
+#         "slot_id": "inst_4_BUF",
+#         "type": "buffer",
+#         "choices": [
+#           { "cell_type": "BUF_X1",  "a": 1.95, "b": 0.07,  "C_in": 0.015 },
+#           { "cell_type": "BUF_X2",  "a": 1.40, "b": 0.055, "C_in": 0.022 },
+#           { "cell_type": "BUF_X4",  "a": 0.72, "b": 0.065, "C_in": 0.044 },
+#           { "cell_type": "BUF_X6",  "a": 0.50, "b": 0.075, "C_in": 0.066 },
+#           { "cell_type": "BUF_X8",  "a": 0.36, "b": 0.085, "C_in": 0.088 },
+#           { "cell_type": "BUF_X12", "a": 0.25, "b": 0.095, "C_in": 0.132 },
+#           { "cell_type": "BUF_X16", "a": 0.18, "b": 0.11,  "C_in": 0.176 }
+#         ]
+#       }
+#     ],
+#     "nets": [
+#       {
+#         "net_id": "net_inst_1_to_inst_2",
+#         "source": "inst_1_NAND2",
+#         "sink": "inst_2_BUF",
+#         "C_wire": 0.035,
+#         "R_wire": 0.15
+#       },
+#       {
+#         "net_id": "net_inst_2_to_inst_3",
+#         "source": "inst_2_BUF",
+#         "sink": "inst_3_NOR3",
+#         "C_wire": 0.030,
+#         "R_wire": 0.12
+#       },
+#       {
+#         "net_id": "net_inst_3_to_inst_4",
+#         "source": "inst_3_NOR3",
+#         "sink": "inst_4_BUF",
+#         "C_wire": 0.040,
+#         "R_wire": 0.18
+#       },
+#       {
+#         "net_id": "net_inst_4_to_sink",
+#         "source": "inst_4_BUF",
+#         "sink": "D_pin",
+#         "C_wire": 0.010,
+#         "R_wire": 0.05,
+#         "C_downstream_in": 0.005
+#       }
+#     ]
+#   }
+# }
+
 class SMTsolver:
     def __init__(self, data):
-        buffer_sizes = set()
+        self.buffer_sizes = set()
         for i in data['path_data']['buffer_slots']:
             for cell in i['choices']:
-                buffer_sizes.add(cell['cell_type'])
-        buffer_sizes = list(buffer_sizes)
-        print("Buffer sizes: " + str(buffer_sizes))
+                self.buffer_sizes.add(cell['cell_type'])
+        self.buffer_sizes = list(self.buffer_sizes)
+        print("Buffer sizes: " + str(self.buffer_sizes))
 
-        slot_ids = set()
+        self.slot_ids = set()
         for i in data['path_data']['buffer_slots']:
-            slot_ids.add(i['slot_id'])
-        slot_ids = list(slot_ids)
-        print("Slot ids: " + str(slot_ids))
+            self.slot_ids.add(i['slot_id'])
+        self.slot_ids = list(self.slot_ids)
+        print("Slot ids: " + str(self.slot_ids))
 
         # Instantiate PyZ3 solver
-        s = Solver()
+        self.solver = Solver()
 
         # --- BASIC CONSTRAINTS ---
         # Construct boolean decision vars: dictionary of (slot_id, cell): z3_var pairs
@@ -85,16 +148,16 @@ class SMTsolver:
         decision_vars = {
             (slot['slot_id'], cell): Bool(f"S_{slot['slot_id']}_{cell}")
                 for slot in data['path_data']['buffer_slots']
-                for cell in buffer_sizes}
+                for cell in self.buffer_sizes}
         print("Decision vars: ", str(decision_vars))
 
         # One-hot constraints: at least one cell per slot, but no more
-        for slot in slot_ids:
-            s.add(Sum([If(Bool(f"S_{slot}_{cell}"), 1, 0) for cell in buffer_sizes]) == 1)
+        for slot in self.slot_ids:
+            self.solver.add(Sum([If(Bool(f"S_{slot}_{cell}"), 1, 0) for cell in self.buffer_sizes]) == 1)
 
         # Capacitance coherency constaints
-        C_in = {slot: Real(f"C_in_{slot}") for slot in slot_ids}
-        C_out ={slot: Real(f"C_out_{slot}") for slot in slot_ids}
+        C_in = {slot: Real(f"C_in_{slot}") for slot in self.slot_ids}
+        C_out ={slot: Real(f"C_out_{slot}") for slot in self.slot_ids}
 
         # C_in = C_in of cell chosen
         for slot in data['path_data']['buffer_slots']:
@@ -106,29 +169,29 @@ class SMTsolver:
                 c_in_val = choice['C_in']
                 cin_sum_terms.append(If(z3_var, c_in_val, 0))
             # Add the constraint: C_in_buf_slot_1 == If(S_1_X1, 0.015, 0) + If(S_1_X2, 0.022, 0) + ...
-            s.add(C_in[slot['slot_id']] == Sum(cin_sum_terms))
+            self.solver.add(C_in[slot['slot_id']] == Sum(cin_sum_terms))
 
         # C_out = C_in + C_net
-        for i, slot in enumerate(slot_ids):
+        for i, slot in enumerate(self.slot_ids):
             slot_id = slot
             net = data['path_data']['nets'][i] # Assumes nets list matches slots list
             C_wire = net['C_wire']
-            if i < len(slot_ids) - 1:
+            if i < len(self.slot_ids) - 1:
                 # Not the last slot. Load is C_wire + C_in of next slot.
-                next_slot_id = slot_ids[i+1]
+                next_slot_id = self.slot_ids[i+1]
                 C_in_next = C_in[next_slot_id]
-                s.add(C_out[slot_id] == C_wire + C_in_next)
+                self.solver.add(C_out[slot_id] == C_wire + C_in_next)
             else:
                 # This is the last slot. Load is C_wire + fixed downstream cap.
                 C_downstream = net['C_downstream_in']
-                s.add(C_out[slot_id] == C_wire + C_downstream)
+                self.solver.add(C_out[slot_id] == C_wire + C_downstream)
 
 
         # --- STAGE DELAY CONSTRAINTS ---
-        D_stage = {slot: Real(f"D_stage_{slot}") for slot in slot_ids}
+        D_stage = {slot: Real(f"D_stage_{slot}") for slot in self.slot_ids}
 
         # Loop through each slot and build its delay equation
-        for i, slot_id in enumerate(slot_ids):
+        for i, slot_id in enumerate(self.slot_ids):
             slot_data = data['path_data']['buffer_slots'][i]
             net_data = data['path_data']['nets'][i]
             
@@ -152,8 +215,8 @@ class SMTsolver:
             C_wire = net_data['C_wire']
             
             # Get the downstream load (C_in of next stage, or fixed flop cap)
-            if i < len(slot_ids) - 1:
-                next_slot_id = slot_ids[i+1]
+            if i < len(self.slot_ids) - 1:
+                next_slot_id = self.slot_ids[i+1]
                 C_downstream_load = C_in[next_slot_id]
             else:
                 C_downstream_load = net_data['C_downstream_in']
@@ -162,7 +225,7 @@ class SMTsolver:
             D_net = R_wire * (C_wire / 2.0 + C_downstream_load)
 
             # Add the Final D_stage constraint
-            s.add(D_stage[slot_id] == D_cell + D_net)
+            self.solver.add(D_stage[slot_id] == D_cell + D_net)
             
         # --- GLOBAL TIMING PARAMETERS ---
         T_period = data["global_timing"]["T_period"]
@@ -175,10 +238,10 @@ class SMTsolver:
         AT = Real("AT")  # nominal arrival at capture flop
 
         # Sum the stage delays
-        sum_D = Sum([D_stage[slot] for slot in slot_ids])
+        sum_D = Sum([D_stage[slot] for slot in self.slot_ids])
 
         # AT = clk->Q + sum of stage delays
-        s.add(AT == T_clk_q + sum_D)
+        self.solver.add(AT == T_clk_q + sum_D)
 
         # --- REQUIRED TIMES ---
         RAT_setup = T_period - T_setup - T_skew # Python float
@@ -189,31 +252,34 @@ class SMTsolver:
         slack_hold  = Real("slack_hold")
 
         # slack_setup = RAT_setup - AT_max
-        s.add(slack_setup == RAT_setup - AT)
+        self.solver.add(slack_setup == RAT_setup - AT)
 
         # slack_hold = AT_min - RAT_hold
-        s.add(slack_hold == AT - RAT_hold)
+        self.solver.add(slack_hold == AT - RAT_hold)
 
         # Enforce non-negative slack => timing-legal
-        s.add(slack_setup >= 0)
-        s.add(slack_hold >= 0)
+        self.solver.add(slack_setup >= 0)
+        self.solver.add(slack_hold >= 0)
             
-    def solve(self, s, buffer_sizes):
+    def solve(self):
         print("\nPrinting all constraints:")
         set_option(rational_to_decimal=True)
         set_option(precision=10)
-        for constaint in s.assertions():
+        for constaint in self.solver.assertions():
             print(constaint, "\n")
 
         try:
             print(" ---- SOLVING ---- ")
-            result = s.check()
+            result = self.solver.check()
             if result == sat:
                 print("Found a valid solution!")
-                m = s.model()
-                choices = extract_buffers(m, buffer_sizes)
+                m = self.solver.model()
+                choices = self.extract_buffers(m)
                 nicer = sorted([(d, m[d]) for d in m], key = lambda x: str(x[0]))
                 pprint.pprint(nicer)
+
+                print("\nExtracted buffers:")
+                pprint.pprint(choices)
                 
                 with open("buffers.sol", "w") as f:
                     for slot, cell in sorted(choices.items()):
@@ -225,6 +291,41 @@ class SMTsolver:
 
         except Exception as e:
             print(f"An error occurred: {e}")
+
+    def extract_buffers(self, model):
+        choices = {}
+
+        for d in model.decls():
+            name = d.name()
+
+            if not name.startswith("S_"):
+                continue
+
+            val = model[d]
+            if not is_true(val):
+                continue
+
+            # remove the "S_"
+            rest = name[len("S_"):]
+
+            # Find which cell this corresponds to by matching suffix
+            selected_cell = None
+            slot_name = None
+
+            for cell in self.buffer_sizes:
+                suffix = "_" + cell
+                if rest.endswith(suffix):
+                    selected_cell = cell
+                    slot_name = rest[: -len(suffix)]
+                    break
+
+            if selected_cell is None:
+                continue
+
+            # Now we have e.g. slot_name="buf_slot_1", selected_cell="BUF_X16"
+            choices[slot_name] = selected_cell
+
+        return choices
             
     def add_conflict(self, model):
         true_vars = []
@@ -238,3 +339,7 @@ class SMTsolver:
         # Clause: at least one of these must flip next time
         clause = Or([Not(v) for v in true_vars])
         self.s.add(clause)
+
+
+SMTsolver_inst = SMTsolver(data)
+SMTsolver_inst.solve()
