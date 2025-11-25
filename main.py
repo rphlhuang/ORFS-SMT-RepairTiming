@@ -7,20 +7,35 @@ from solver import *
 #   3. Run setup_sta.tcl
 sta = STAController("setup_sta.tcl")
 
-
-#-----------------------
-# run SMT Solver # times
-#-----------------------
-iters = 100
-for _ in range(iters):
-    
-    # Runs SMT
+# Runs SMT
+while True:
     # Outputs chosen buffer sizes to buffer.sol
-    run_SMT_solver(data)
+    SAT = SMTsolver(data)
+
+    # If SAT 
+    #   run apply_buffers
+    # else
+    #   No valid solution
+    if SAT:
+        # Grabs values from buffer.sol
+        # runs apply_buffer_solution
+        # then runs timing slack with new buffers
+        setup_slack, hold_slack = sta.apply_and_get_slack()
+        
+        # Slack is still negative
+        if (setup_slack <= 0) or (hold_slack <= 0):
+            # add conflict clause
+            print("STA output has negative slack, adding conflict clause...")
+        
+        # Slack is now positive
+        else:
+            print("STA output has positive slack")
+        
+    else:
+        print("Unsatisfiable. No buffer combination meets timing.")
+        break
     
-    # Grabs values from buffer.sol
-    # runs apply_buffer_solution
-    # then runs worst slack with new buffers
-    sta.apply_and_get_slack()
+    
+    
 
 sta.close()
