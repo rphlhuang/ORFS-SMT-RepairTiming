@@ -1,6 +1,5 @@
 from z3 import *
 import pprint
-# from z3help import *
 
 data = {
   "global_timing": { "T_period": 1.8, "T_skew": 0.05, "T_setup": 0.08, "T_hold": 0.04 },
