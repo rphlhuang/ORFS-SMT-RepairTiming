@@ -23,21 +23,18 @@ class STAController:
         # Source setup file
         self.send_cmd(f"source {setup_file}")
 
+    # Creates a background thread that reads OpenSTA output
     def _reader_thread(self):
-        """Background thread that continuously reads OpenSTA output."""
         for line in self.proc.stdout:
             self.output_queue.put(line.rstrip("\n"))
 
+    # Sends a command to OpenSTA
     def send_cmd(self, cmd):
-        """Send a Tcl command to OpenSTA."""
         self.proc.stdin.write(cmd + "\n")
         self.proc.stdin.flush()
 
+    # Returns a list of all lines with markers
     def read_until(self, markers):
-        """
-        Read lines until one of the markers appears.
-        Returns a list of all collected lines.
-        """
         lines = []
         while True:
             line = self.output_queue.get()
@@ -46,15 +43,15 @@ class STAController:
                 if line.startswith(m):
                     return lines
 
+    # Applies new buffer choices and returns setup and hold slack
     def apply_and_get_slacks(self, solfile="buffers.sol"):
-        """Apply buffer choices and return setup, hold slacks."""
         # Apply buffers
         self.send_cmd(f"apply_buffer_solution {solfile}")
 
         # Compute timing
         self.send_cmd("compute_worst_slacks")
 
-        # Wait until we get WS_SETUP and WS_HOLD (WS_HOLD is last)
+        # Wait until we get WS_SETUP and WS_HOLD
         lines = self.read_until(["WS_HOLD"])
 
         setup_slack = None
@@ -68,7 +65,7 @@ class STAController:
 
         return setup_slack, hold_slack
 
+    # Closes OpenSTA Thread
     def close(self):
-        """Terminate OpenSTA cleanly."""
         self.send_cmd("exit")
         self.proc.wait()
