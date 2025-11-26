@@ -2,11 +2,14 @@ import subprocess
 import threading
 import queue
 
+OpenSTA  = "/OpenROAD-flow-scripts/tools/install/OpenROAD/bin/sta"
+OpenROAD = "/OpenROAD-flow-scripts/tools/install/OpenROAD/bin/openroad"
+
 class STAController:
     def __init__(self, setup_file="setup_sta.tcl"):
         # Start OpenSTA as a persistent background process
         self.proc = subprocess.Popen(
-            ["opensta", "-no_init"],
+            [OpenSTA, "-no_init"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
