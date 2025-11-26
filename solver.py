@@ -101,6 +101,7 @@ class SMTsolver:
 
         # Instantiate PyZ3 solver
         self.solver = Solver()
+        self.model = []
 
         # --- BASIC CONSTRAINTS ---
         # Construct boolean decision vars: dictionary of (slot_id, cell): z3_var pairs
@@ -242,9 +243,9 @@ class SMTsolver:
             result = self.solver.check()
             if result == sat:
                 print("Found a valid solution!")
-                m = self.solver.model()
-                choices = self.extract_buffers(m)
-                nicer = sorted([(d, m[d]) for d in m], key = lambda x: str(x[0]))
+                self.model = self.solver.model()
+                choices = self.extract_buffers(self.model)
+                nicer = sorted([(d, self.model[d]) for d in self.model], key = lambda x: str(x[0]))
                 pprint.pprint(nicer)
 
                 print("\nExtracted buffers:")
@@ -281,4 +282,10 @@ class SMTsolver:
 
         # Clause: at least one of these must flip next time
         clause = Or([Not(v) for v in true_vars])
-        self.s.add(clause)
+        self.solver.add(clause)
+
+
+SMT_inst = SMTsolver(data)
+SMT_inst.solve()
+SMT_inst.add_conflict(SMT_inst.model)
+SMT_inst.solve()
