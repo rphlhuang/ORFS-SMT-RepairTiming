@@ -283,9 +283,3 @@ class SMTsolver:
         # Clause: at least one of these must flip next time
         clause = Or([Not(v) for v in true_vars])
         self.solver.add(clause)
-
-
-SMT_inst = SMTsolver(data)
-SMT_inst.solve()
-SMT_inst.add_conflict(SMT_inst.model)
-SMT_inst.solve()
