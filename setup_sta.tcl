@@ -1,94 +1,45 @@
-# ==========================================
-#               STA Setup
-# ==========================================
+# ==============================
+# OpenSTA setup for gcd on nangate45
+# ==============================
 
-# Load timing, netlist, and constraints
-read_liberty ./lib/typical.lib
-read_verilog ./netlist/design_post_synth.v
-link_design top_module_name
-read_sdc ./constraints/design.sdc
+# 1. Design + platform
+set design   "gcd"
+set platform "nangate45"
 
-# Get initial timing values
-update_timing
+# 2. Base directories (container paths)
+set flow_root   "/OpenROAD-flow-scripts/flow"
+set results_dir "$flow_root/results/$platform/$design/base"
+set lib_dir     "$flow_root/platforms/$platform/lib"
 
+# 3. Liberty timing model
+read_liberty "$lib_dir/NangateOpenCellLibrary_typical.lib"
 
+# 4. Netlist + link (use post-route final netlist)
+read_verilog "$results_dir/6_final.v"
+link_design $design
 
-# ==========================================
-#             TCL Functions
-# ==========================================
+# 5. Constraints
+read_sdc "$results_dir/6_final.sdc"
 
-# Apply buffer solution file
-# ==========================================
-# File format expected:
-#   <slot_name> <cell_name>
-# Example:
-#   buf_slot_1 BUF_X1
-#   buf_slot_2 BUF_X2
-
-proc apply_buffer_solution {filename} {
-    global slot_to_insts
-
-    puts "INFO: Applying buffer solution from $filename"
-
-    set fh [open $filename r]
-    while {[gets $fh line] >= 0} {
-        set line [string trim $line]
-        if {$line eq ""} {
-            continue
-        }
-        # allow comments starting with '#'
-        if {[string index $line 0] eq "#"} {
-            continue
-        }
-
-        set fields [split $line]
-        if {[llength $fields] < 2} {
-            puts "WARNING: malformed line in $filename: '$line'"
-            continue
-        }
-
-        set slot_name [lindex $fields 0]
-        set cell_name [lindex $fields 1]
-
-        if {![info exists slot_to_insts($slot_name)]} {
-            puts "WARNING: unknown slot $slot_name, skipping"
-            continue
-        }
-
-        set inst_list $slot_to_insts($slot_name)
-
-        foreach inst $inst_list {
-            # check the instance exists in the design
-            set inst_cells [get_cells $inst -quiet]
-            if {[sizeof_collection $inst_cells] == 0} {
-                puts "WARNING: instance $inst (slot $slot_name) not found, skipping"
-                continue
-            }
-
-            puts "INFO: replace_cell $inst $cell_name"
-            replace_cell $inst $cell_name
-        }
-    }
-    close $fh
+# 6. Parasitics (post-route SPEF)
+if {[file exists "$results_dir/6_final.spef"]} {
+    read_spef "$results_dir/6_final.spef"
 }
 
+# 7. Procs expected by Python
 
-# Run timing & print worst slacks
+# For now, this doesn't actually modify the design — it just logs.
+# Later you'll implement real ECOs here.
+proc apply_buffer_solution {solfile} {
+    puts "APPLYING_BUFFER_SOLUTION $solfile"
+}
 
 proc compute_worst_slacks {} {
-    # recompute timing after buffer changes
-    update_timing
+    # Max = setup; Min = hold
+    set ws_setup [report_worst_slack -max]
+    set ws_hold  [report_worst_slack -min]
 
-    # get worst setup and hold slacks
-    set ws_setup [report_worst_slack]
-    set ws_hold  [report_worst_slack -hold]
-
-    # print in a machine-parseable way
-    puts "WORST_SETUP_SLACK $ws_setup"
-    puts "WORST_HOLD_SLACK  $ws_hold"
-
-    # optional: dump the worst path for debugging/conflict clauses
-    # report_timing -max_paths 1 > worst_path.rpt
+    # These markers are what your Python code waits for
+    puts "WS_SETUP $ws_setup"
+    puts "WS_HOLD $ws_hold"
 }
-
-puts "INFO: OpenSTA setup complete."
