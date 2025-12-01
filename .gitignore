@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 *.sol
 .DS_Store
+.vscode
+venv-docker
