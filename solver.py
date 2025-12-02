@@ -6,7 +6,7 @@ data = {
   "global_timing": {
     "T_period": 1.1,
     "T_skew": 0.00010000000000002269,
-    "T_setup": 0.8435,
+    "T_setup": -0.8435,
     "T_hold": 0.12890000000000001
   },
   "path_data": {
@@ -675,7 +675,7 @@ class SMTsolver:
 
         # --- SLACK VARIABLES ---
         slack_setup = Real("slack_setup")
-        slack_hold  = Real("slack_hold")
+        slack_hold = Real("slack_hold")
 
         # slack_setup = RAT_setup - AT_max
         self.solver.add(slack_setup == RAT_setup - AT)

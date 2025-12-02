@@ -49,7 +49,7 @@ def main():
     global_timing = {
         "T_period": row0['global_T_period_ps'] / 1000.0,
         "T_skew": row0['global_T_skew_ps'] / 1000.0,
-        "T_setup": abs(row0['global_T_setup_ps']) / 1000.0, # Setup often reported negative in some tools, take abs
+        "T_setup": row0['global_T_setup_ps'] / 1000.0,
         "T_hold": row0['global_T_hold_ps'] / 1000.0
     }
 
