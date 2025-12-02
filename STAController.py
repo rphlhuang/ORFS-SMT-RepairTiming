@@ -2,8 +2,8 @@ import subprocess
 import threading
 import queue
 
-OpenSTA  = "/OpenROAD-flow-scripts/tools/install/OpenROAD/bin/sta"
-OpenROAD = "/OpenROAD-flow-scripts/tools/install/OpenROAD/bin/openroad"
+OpenSTA = "../../tools/install/OpenROAD/bin/sta"
+OpenROAD = "../../tools/install/OpenROAD/bin/openroad"
 
 class STAController:
     def __init__(self, setup_file="setup_sta.tcl"):
