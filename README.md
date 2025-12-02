@@ -1,5 +1,7 @@
 # OpenROAD Buffer Resizing with SMT
 
+**NOTE: Clone this repo into the flow/ folder inside OpenROAD-flow-scripts**
+
 This repository contains the core logic for a formal methods final project (CSE 216 at UC Santa Cruz). The goal is to find an **optimal** set of buffer sizes for a critical timing path in a VLSI design, ensuring that both setup and hold timing constraints are met.
 
 Instead of relying on traditional heuristics, this project models the entire timing path as a system of constraints, which is then solved by the Z3 SMT solver to find a valid, timing-aware solution.
@@ -19,7 +21,7 @@ The core architecture is as follows:
 ## Running the Project
 1.  **Install dependencies:**
     ```bash
-    pip3 install z3-solver
+    pip3 install -r requirements.txt
     ```
 2.  **Run the solver:**
     ```bash

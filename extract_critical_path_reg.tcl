@@ -119,7 +119,8 @@ proc stage_to_json {stage_dict} {
   return "\{[join $items , ]\}"
 }
 
-set script_dir [file dirname [file normalize [info script]]]
+set script_dir_child [file dirname [file normalize [info script]]]
+set script_dir [file join $script_dir_child ../]
 set flow_root [file normalize $script_dir]
 
 set results_dir [file normalize [file join $flow_root results/sky130hd/gcd/base]]
