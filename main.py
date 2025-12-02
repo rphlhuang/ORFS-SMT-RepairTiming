@@ -1,5 +1,6 @@
 from STAController import *
 from solver import *
+import json
 
 # This will
 #   1. Start sta
@@ -7,6 +8,9 @@ from solver import *
 #   3. Run setup_sta.tcl
 print("Setting up STAcontroller")
 sta = STAController("setup_sta.tcl")
+
+with open("solver_input.json", "r") as f:
+    data = json.load(f)
 
 # Creating SMT instance
 print("Setting up SMT solver")
