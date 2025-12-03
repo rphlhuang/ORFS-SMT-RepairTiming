@@ -31,6 +31,24 @@ set netlist_file "../results/sky130hd/gcd/base/6_final.v"
 set sdc_file     "../results/sky130hd/gcd/base/6_final.sdc"
 set spef_file    "../results/sky130hd/gcd/base/6_final.spef"
 set lib_files    "../platforms/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib"
+set tech_lefs    "../platforms/sky130hd/tech/sky130_fd_sc_hd.tlef"
+
+
+# You can either list specific LEFs or grab all of them:
+set cell_lefs [glob -nocomplain ../platforms/sky130hd/lef/*.lef]
+
+foreach lef [concat $tech_lefs $cell_lefs] {
+    set lef_trim [string trim $lef]
+    if {$lef_trim eq ""} {
+        continue
+    }
+    if {![file exists $lef_trim]} {
+        puts "WARNING: LEF file '$lef_trim' not found, skipping"
+        continue
+    }
+    puts "INFO: read_lef $lef_trim"
+    read_lef $lef_trim
+}
 
 if {$design_name eq ""} {
     puts "ERROR: DESIGN_NAME environment variable is not set"
@@ -53,6 +71,7 @@ puts "INFO: NETLIST_FILE  = $netlist_file"
 puts "INFO: SDC_FILE      = $sdc_file"
 puts "INFO: SPEF_FILE     = $spef_file"
 puts "INFO: LIB_FILES     = $lib_files"
+puts "INFO: LEF_FILES     = $tech_lefs"
 
 # -----------------------------
 # 2. Read liberty file(s)
@@ -192,5 +211,14 @@ proc compute_worst_slacks {} {
     report_worst_slack
     report_worst_slack -min
 
+    flush stdout
+}
+
+# -----------------------------
+# 8. Procedure: write_current_db
+# -----------------------------
+proc write_current_db {odb_path} {
+    puts "INFO: Writing DB to '$odb_path'"
+    write_db $odb_path
     flush stdout
 }

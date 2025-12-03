@@ -40,17 +40,17 @@ while True:
         print("running sta.apply_and_get_slack")
         setup_slack, hold_slack = sta.apply_and_get_slacks()
         
-        # Slack is still negative
-        print("Checking if slack is negative")
-        if (setup_slack < THRESHOLD) or (hold_slack < THRESHOLD):
-            # add conflict clause
-            print("STA output has negative slack, adding conflict clause...")
-            SMT_inst.add_conflict(SMT_inst.model)
+        # add conflict clause
+        # print("STA output has negative slack, adding conflict clause...")
+        # SMT_inst.add_conflict(SMT_inst.model)
         
         # Slack is now positive
-        else:
-            print("STA output has positive slack")
-            break
+        # else:
+        print("STA output has optimal slack")
+        
+        # create new odb file
+        sta.send_cmd("write_current_db ../results/sky130hd/gcd/base/after_smt.odb\n")
+        break
         
     else:
         print("Unsatisfiable. No buffer combination meets timing.")
