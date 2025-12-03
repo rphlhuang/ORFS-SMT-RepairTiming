@@ -1,2 +1,3 @@
 z3-solver
-z3
+pandas
+numpy

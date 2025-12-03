@@ -31,7 +31,7 @@ def resolve_spef(path: Path, json_path: Path) -> Path:
 
 
 def parse_args() -> argparse.Namespace:
-    script_dir = Path(__file__).resolve().parent
+    script_dir = Path(__file__).resolve().parent.parent
     default_results = script_dir / "results" / "sky130hd" / "gcd" / "base"
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(

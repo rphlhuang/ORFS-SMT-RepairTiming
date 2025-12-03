@@ -1,94 +1,6 @@
 from z3 import *
 import pprint
 
-
-data = {
-  "global_timing": {
-    "T_period": 1.8,
-    "T_skew": 0.05,
-    "T_setup": 0.08,
-    "T_hold": 0.04
-  },
-  "path_data": {
-    "fixed_delays": {
-      "T_clk_q": 0.11
-    },
-    "stages": [
-      {
-        "slot_id": "inst_1_NAND2",
-        "type": "combinational",
-        "choices": [
-          { "cell_type": "NAND2_X1", "a": 2.50, "b": 0.09, "C_in": 0.012 }
-        ]
-      },
-      {
-        "slot_id": "inst_2_BUF",
-        "type": "buffer",
-        "choices": [
-          { "cell_type": "BUF_X1",  "a": 1.95, "b": 0.07,  "C_in": 0.015 },
-          { "cell_type": "BUF_X2",  "a": 1.40, "b": 0.055, "C_in": 0.022 },
-          { "cell_type": "BUF_X4",  "a": 0.72, "b": 0.065, "C_in": 0.044 },
-          { "cell_type": "BUF_X6",  "a": 0.50, "b": 0.075, "C_in": 0.066 },
-          { "cell_type": "BUF_X8",  "a": 0.36, "b": 0.085, "C_in": 0.088 },
-          { "cell_type": "BUF_X12", "a": 0.25, "b": 0.095, "C_in": 0.132 },
-          { "cell_type": "BUF_X16", "a": 0.18, "b": 0.11,  "C_in": 0.176 }
-        ]
-      },
-      {
-        "slot_id": "inst_3_NOR3",
-        "type": "combinational",
-        "choices": [
-          { "cell_type": "NOR3_X2", "a": 3.10, "b": 0.12, "C_in": 0.018 }
-        ]
-      },
-      {
-        "slot_id": "inst_4_BUF",
-        "type": "buffer",
-        "choices": [
-          { "cell_type": "BUF_X1",  "a": 1.95, "b": 0.07,  "C_in": 0.015 },
-          { "cell_type": "BUF_X2",  "a": 1.40, "b": 0.055, "C_in": 0.022 },
-          { "cell_type": "BUF_X4",  "a": 0.72, "b": 0.065, "C_in": 0.044 },
-          { "cell_type": "BUF_X6",  "a": 0.50, "b": 0.075, "C_in": 0.066 },
-          { "cell_type": "BUF_X8",  "a": 0.36, "b": 0.085, "C_in": 0.088 },
-          { "cell_type": "BUF_X12", "a": 0.25, "b": 0.095, "C_in": 0.132 },
-          { "cell_type": "BUF_X16", "a": 0.18, "b": 0.11,  "C_in": 0.176 }
-        ]
-      }
-    ],
-    "nets": [
-      {
-        "net_id": "net_inst_1_to_inst_2",
-        "source": "inst_1_NAND2",
-        "sink": "inst_2_BUF",
-        "C_wire": 0.035,
-        "R_wire": 0.15
-      },
-      {
-        "net_id": "net_inst_2_to_inst_3",
-        "source": "inst_2_BUF",
-        "sink": "inst_3_NOR3",
-        "C_wire": 0.030,
-        "R_wire": 0.12
-      },
-      {
-        "net_id": "net_inst_3_to_inst_4",
-        "source": "inst_3_NOR3",
-        "sink": "inst_4_BUF",
-        "C_wire": 0.040,
-        "R_wire": 0.18
-      },
-      {
-        "net_id": "net_inst_4_to_sink",
-        "source": "inst_4_BUF",
-        "sink": "D_pin",
-        "C_wire": 0.010,
-        "R_wire": 0.05,
-        "C_downstream_in": 0.005
-      }
-    ]
-  }
-}
-
 class SMTsolver:
     def __init__(self, data):
         self.stages = data['path_data']['stages']
@@ -97,10 +9,10 @@ class SMTsolver:
         for i in data['path_data']['stages']:
             self.slot_ids.append(i['slot_id'])
         self.slot_ids = list(self.slot_ids)
-        print("Slot ids: " + str(self.slot_ids))
+        # print("Slot ids: " + str(self.slot_ids))
 
         # Instantiate PyZ3 solver
-        self.solver = Solver()
+        self.solver = Optimize()
         self.model = []
 
         # --- BASIC CONSTRAINTS ---
@@ -111,7 +23,7 @@ class SMTsolver:
                 for cell_option in slot['choices']:
                     cell_name = cell_option['cell_type']
                     self.decision_vars[(slot['slot_id'], cell_name)] = Bool(f"S_{slot['slot_id']}_{cell_name}")
-        print("Decision vars: ", str(self.decision_vars))
+        # print("Decision vars: ", str(self.decision_vars))
 
         # One-hot constraints: at least one cell per slot, but no more
         for slot in self.stages:
@@ -219,7 +131,7 @@ class SMTsolver:
 
         # --- SLACK VARIABLES ---
         slack_setup = Real("slack_setup")
-        slack_hold  = Real("slack_hold")
+        slack_hold = Real("slack_hold")
 
         # slack_setup = RAT_setup - AT_max
         self.solver.add(slack_setup == RAT_setup - AT)
@@ -228,15 +140,15 @@ class SMTsolver:
         self.solver.add(slack_hold == AT - RAT_hold)
 
         # Enforce non-negative slack => timing-legal
-        self.solver.add(slack_setup >= 0)
-        self.solver.add(slack_hold >= 0)
+        self.solver.maximize(slack_setup)
+        self.solver.maximize(slack_hold)
             
     def solve(self):
-        print("\nPrinting all constraints:")
+        # print("\nPrinting all constraints:")
         set_option(rational_to_decimal=True)
         set_option(precision=10)
-        for constaint in self.solver.assertions():
-            print(constaint, "\n")
+        # for constaint in self.solver.assertions():
+            # print(constaint, "\n")
 
         try:
             print(" ---- SOLVING ---- ")
@@ -246,7 +158,7 @@ class SMTsolver:
                 self.model = self.solver.model()
                 choices = self.extract_buffers(self.model)
                 nicer = sorted([(d, self.model[d]) for d in self.model], key = lambda x: str(x[0]))
-                pprint.pprint(nicer)
+                # pprint.pprint(nicer)
 
                 print("\nExtracted buffers:")
                 pprint.pprint(choices)
@@ -278,14 +190,7 @@ class SMTsolver:
                 true_vars.append(var)
 
         if not true_vars:
-            return  # nothing to block, shouldn't really happen
-
-        # Clause: at least one of these must flip next time
+            return  
+        
         clause = Or([Not(v) for v in true_vars])
         self.solver.add(clause)
-
-
-SMT_inst = SMTsolver(data)
-SMT_inst.solve()
-SMT_inst.add_conflict(SMT_inst.model)
-SMT_inst.solve()
