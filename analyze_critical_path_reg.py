@@ -55,7 +55,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output",
         type=Path,
-        default=default_results / "critical_path_variants_reg.csv",
+        default="critical_path_variants_reg.csv",
         help="Destination CSV path.",
     )
     return parser.parse_args()
