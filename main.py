@@ -2,6 +2,8 @@ from STAController import *
 from solver import *
 import json
 
+THRESHOLD = 0.0
+
 # This will
 #   1. Start sta
 #   2. Start thread
@@ -16,14 +18,17 @@ with open("solver_input.json", "r") as f:
 print("Setting up SMT solver")
 SMT_inst = SMTsolver(data)
 
-setup_slack = -3
-hold_slack = -3
 # Runs SMT
+iter = 1
 while True:
     # Outputs chosen buffer sizes to buffer.sol
+    print("-------------------------")
+    print(f"[ITER] {iter}")
+    print("-------------------------")
     print("Running solve() on SMT_inst")
     SAT = SMT_inst.solve()
 
+    iter += 1
     # If SAT 
     #   run apply_buffers
     # else
@@ -33,17 +38,14 @@ while True:
         # runs apply_buffer_solution
         # then runs timing slack with new buffers
         print("running sta.apply_and_get_slack")
-        setup_slack += 1
-        hold_slack += 1
-        # setup_slack, hold_slack = sta.apply_and_get_slacks()
+        setup_slack, hold_slack = sta.apply_and_get_slacks()
         
         # Slack is still negative
         print("Checking if slack is negative")
-        if (setup_slack <= 0) or (hold_slack <= 0):
+        if (setup_slack < THRESHOLD) or (hold_slack < THRESHOLD):
             # add conflict clause
-            print("Adding conflict clause")
-            SMT_inst.add_conflict(SMT_inst.model)
             print("STA output has negative slack, adding conflict clause...")
+            SMT_inst.add_conflict(SMT_inst.model)
         
         # Slack is now positive
         else:
