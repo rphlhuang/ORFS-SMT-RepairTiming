@@ -1,5 +1,5 @@
 from STAController import *
-from solver import *
+from solver_ppa import *
 import json
 
 THRESHOLD = 0.0
