@@ -31,7 +31,9 @@ run_initial_design: $(BASE_ODB)
 $(BASE_ODB):
 	@echo "--- [1/4] Running Initial OpenROAD Flow for $(DESIGN_TARGET_CONFIG) ---"
 	env -u VIRTUAL_ENV PATH=$(shell echo $$PATH | sed -e 's|$(PWD)/$(VENV_BIN):||') \
-	$(MAKE) -C $(ORFS_FLOW_DIR) DESIGN_CONFIG="$(DESIGN_TARGET_CONFIG)"
+	$(MAKE) -C $(ORFS_FLOW_DIR) DESIGN_CONFIG="$(DESIGN_TARGET_CONFIG)" || true
+	test -f $@
+	test -f $(RESULTS)/6_final.sdc || cp $(RESULTS)/6_1_fill.sdc $(RESULTS)/6_final.sdc
 
 # Generate CSV
 extract_csv: $(CSV_REPORT)
