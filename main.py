@@ -1,6 +1,5 @@
 from solver import *
 import subprocess
-from STAController import *
 import json
 
 OpenROAD = "../../tools/install/OpenROAD/bin/openroad"
