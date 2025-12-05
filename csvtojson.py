@@ -5,17 +5,12 @@ import re
 import sys
 
 def parse_size(cell_name):
-    """Extracts size index from cell name (e.g., 'buf_4' -> 4). Defaults to 1."""
     match = re.search(r'_(\d+)$', cell_name)
     if match:
         return int(match.group(1))
     return 1
 
 def perform_regression(df_variant):
-    """
-    Performs linear regression (Delay = a * Load + b) on the variant data.
-    Returns slope (a) and intercept (b).
-    """
     X = df_variant['output_capacitance_fF'].values
     y = df_variant['cell_delay_ps'].values
     
@@ -43,7 +38,7 @@ def main():
         print(f"Error: File {input_csv} not found.")
         return
 
-    # --- 1. Extract Global Timing ---
+    # --- Extract Global Timing ---
     # Get values from the first row (assuming constant for the path)
     row0 = df.iloc[0]
     global_timing = {
@@ -53,7 +48,7 @@ def main():
         "T_hold": row0['global_T_hold_ps'] / 1000.0
     }
 
-    # --- 2. Build C_in Reference Map ---
+    # --- Build C_in Reference Map ---
     # We use 'downstream_input_cap_fF' from stage i to determine C_in of original cell at stage i+1.
     cin_ref_map = {} # Cell_Name -> Capacitance (fF)
     
@@ -73,7 +68,7 @@ def main():
         
         cin_ref_map[next_orig_cell] = downstream_cap
 
-    # --- 3. Process Stages ---
+    # --- Process Stages ---
     stages = []
     nets = []
     
@@ -109,21 +104,35 @@ def main():
         choices = []
         # Group by variant_cell to handle the sweep data
         for variant_name, variant_df in stage_df.groupby('variant_cell'):
-            # 1. Linear Regression for Delay Model
+            # create linear regression from scatterplot
             a_val, b_val = perform_regression(variant_df)
             
-            # 2. Scale C_in
+            # scale C_in
             var_size = parse_size(variant_name)
             c_in_variant_fF = c_in_orig_fF * (var_size / orig_size)
+
+            # grab area
+            try:
+                area_val = variant_df.iloc[0]['variant_area_um2']
+                choices.append({
+                    "cell_type": variant_name,
+                    "a": round(a_val, 4), # kOhm
+                    "b": round(b_val, 5), # ns
+                    "C_in": round(c_in_variant_fF / 1000.0, 5), # pF
+                    "area": round(area_val, 5)
+                })
+            except Exception as e:
+                print(f"Failed to retrieve area data: {e}")
+                choices.append({
+                    "cell_type": variant_name,
+                    "a": round(a_val, 4), # kOhm
+                    "b": round(b_val, 5), # ns
+                    "C_in": round(c_in_variant_fF / 1000.0, 5), # pF
+                })
+                continue
             
-            choices.append({
-                "cell_type": variant_name,
-                "a": round(a_val, 4),          # kOhm
-                "b": round(b_val, 5),          # ns
-                "C_in": round(c_in_variant_fF / 1000.0, 5) # pF
-            })
         
-        # Sort choices by size/name for consistency
+        # sort choices by size/name for consistency
         choices.sort(key=lambda x: x['cell_type'])
 
         stages.append({
@@ -133,21 +142,20 @@ def main():
         })
 
         # --- Build Net ---
-        # Determine Source and Sink
         source = instance_name
         
         if i < len(sorted_gate_indices) - 1:
-            # Intermediate Net
+            # intermediate Net
             next_gate_idx = sorted_gate_indices[i+1]
             next_instance = df[df['gate_index'] == next_gate_idx].iloc[0]['instance_name']
             sink = next_instance
             is_terminal = False
         else:
-            # Final Net
+            # final Net
             sink = "sink_pin"
             is_terminal = True
 
-        # Net Parasitics (Constant for the stage)
+        # net parasitics (Constant for the stage)
         wire_res_ohm = stage_df.iloc[0]['wire_resistance_ohm']
         wire_cap_fF = stage_df.iloc[0]['wire_capacitance_fF']
         
@@ -171,7 +179,7 @@ def main():
         "global_timing": global_timing,
         "path_data": {
             "fixed_delays": {
-                # Taking T_clk_q from the first row
+                # taking T_clk_q from the first row
                 "T_clk_q": round(row0['t_clk_q_max_ps'] / 1000.0, 4)
             },
             "stages": stages,
@@ -179,7 +187,7 @@ def main():
         }
     }
 
-    # Write to file
+    # write to file
     with open(output_json, 'w') as f:
         json.dump(final_json, f, indent=2)
     

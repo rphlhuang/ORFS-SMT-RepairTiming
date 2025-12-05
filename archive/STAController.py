@@ -10,7 +10,7 @@ class STAController:
         # Start OpenSTA as a persistent background process
         print("Starting STA subprocess")
         self.proc = subprocess.Popen(
-            [OpenSTA, "-no_init"],
+            [OpenROAD, "-no_init"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
