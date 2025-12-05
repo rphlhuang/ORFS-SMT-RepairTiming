@@ -17,7 +17,7 @@ The core architecture is as follows:
 4.  **Implementation (TCL Conversion):** If a `sat` solution is found, it's converted into a set of Tcl commands (`resize_cell`).
 5.  **Validation (OpenROAD):** The Tcl commands are run in OpenROAD to modify the design, and OpenSTA is run again to validate if timing is truly met. If it fails, the loop can be run again.
 
-
+<!-- 
 ## Running the Project
 1.  **Install dependencies:**
     ```bash
@@ -26,4 +26,12 @@ The core architecture is as follows:
 2.  **Run the solver:**
     ```bash
     python3 solver.py
-    ```
+    ``` -->
+
+## Running the Flow
+- `make all` to run the whole closed loop system (OpenROAD -> Extraction -> Z3 -> Optimization). Alter which design this chooses by changing the `DESIGN_TARGET` parameter.
+- `make setup` sets up the Python libraries in a virtual environment (required for later steps)
+- `make run_initial_design` runs ORFS.
+- `make extract_csv` generates a timing info CSV from an 6_final.odb in the results folder.
+- `make convert_json` converts the CSV to JSON using linear regression to prepare for Z3 .
+- `make solve` runs the Z3 OMT solver and applies resizing in OpenROAD if SAT assignment is found.
