@@ -167,6 +167,14 @@ def parse_pins(block: str) -> Dict[str, Dict[str, object]]:
     return pins
 
 
+def parse_area(block: str) -> Optional[float]:
+    """Extract cell area from liberty cell block."""
+    match = re.search(r'area\s*:\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)', block, re.IGNORECASE)
+    if match:
+        return float(match.group(1))
+    return None
+
+
 def parse_timing_block(block: str) -> Dict[str, object]:
     entry: Dict[str, object] = {}
     rel = re.search(r'related_pin\s*:\s*"([^"]+)"', block, re.IGNORECASE)
@@ -201,9 +209,10 @@ class TimingArc:
 
 
 class LibertyCell:
-    def __init__(self, name: str, pins: Dict[str, Dict[str, object]]) -> None:
+    def __init__(self, name: str, pins: Dict[str, Dict[str, object]], area: Optional[float] = None) -> None:
         self.name = name
         self.pins = pins
+        self.area = area
 
     def get_pin_cap(self, pin_name: str) -> Optional[float]:
         pin = self.pins.get(pin_name)
@@ -243,7 +252,8 @@ class LibertyDatabase:
                 except ValueError:
                     continue
                 pins = parse_pins(block)
-                self.cells[cell_name] = LibertyCell(cell_name, pins)
+                area = parse_area(block)
+                self.cells[cell_name] = LibertyCell(cell_name, pins, area)
         for cell_name in self.cells:
             base, strength = split_cell_family(cell_name)
             self.family_map.setdefault(base, []).append((strength, cell_name))
@@ -436,6 +446,7 @@ def write_csv(rows: List[Dict[str, object]], out_path: Path) -> None:
         "instance_name",
         "original_cell",
         "variant_cell",
+        "variant_area_um2",
         "fixed_input_slew_ps",
         "output_capacitance_fF",
         "cell_delay_ps",
@@ -501,12 +512,17 @@ def build_rows(
         wire_res = spef_info["wire_res_ohm"]
         downstream_cap_fF = compute_downstream_cap(stage, libdb)
         for variant_cell, load_pf, delay_ps in variants:
+            variant_cell_obj = libdb.get_cell(variant_cell)
+            variant_area = None
+            if variant_cell_obj and variant_cell_obj.area is not None:
+                variant_area = variant_cell_obj.area
             rows.append(
                 {
                     "gate_index": stage_index,
                     "instance_name": inst_name,
                     "original_cell": original_cell,
                     "variant_cell": variant_cell,
+                    "variant_area_um2": variant_area,
                     "fixed_input_slew_ps": input_slew_ps,
                     "output_capacitance_fF": load_pf * PF_TO_FF,
                     "cell_delay_ps": delay_ps,
