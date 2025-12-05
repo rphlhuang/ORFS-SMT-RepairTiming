@@ -112,15 +112,25 @@ def main():
             c_in_variant_fF = c_in_orig_fF * (var_size / orig_size)
 
             # grab area
-            area_val = variant_df.iloc[0]['variant_area_um2']
+            try:
+                area_val = variant_df.iloc[0]['variant_area_um2']
+                choices.append({
+                    "cell_type": variant_name,
+                    "a": round(a_val, 4), # kOhm
+                    "b": round(b_val, 5), # ns
+                    "C_in": round(c_in_variant_fF / 1000.0, 5), # pF
+                    "area": round(area_val, 5)
+                })
+            except Exception as e:
+                print(f"Failed to retrieve area data: {e}")
+                choices.append({
+                    "cell_type": variant_name,
+                    "a": round(a_val, 4), # kOhm
+                    "b": round(b_val, 5), # ns
+                    "C_in": round(c_in_variant_fF / 1000.0, 5), # pF
+                })
+                continue
             
-            choices.append({
-                "cell_type": variant_name,
-                "a": round(a_val, 4), # kOhm
-                "b": round(b_val, 5), # ns
-                "C_in": round(c_in_variant_fF / 1000.0, 5), # pF
-                "area": round(area_val, 5)
-            })
         
         # sort choices by size/name for consistency
         choices.sort(key=lambda x: x['cell_type'])
