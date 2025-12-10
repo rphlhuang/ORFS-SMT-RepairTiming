@@ -1,0 +1,4 @@
+inst_1_NAND2 NAND2_X1
+inst_2_BUF BUF_X6
+inst_3_NOR3 NOR3_X2
+inst_4_BUF BUF_X4

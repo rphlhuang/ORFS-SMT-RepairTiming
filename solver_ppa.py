@@ -173,7 +173,7 @@ class SMTsolver:
                 self.model = self.solver.model()
                 choices = self.extract_buffers(self.model)
                 nicer = sorted([(d, self.model[d]) for d in self.model], key = lambda x: str(x[0]))
-                # pprint.pprint(nicer)
+                pprint.pprint(nicer)
 
                 print("\nExtracted buffers:")
                 pprint.pprint(choices)
